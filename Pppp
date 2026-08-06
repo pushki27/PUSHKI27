@@ -1,0 +1,41 @@
+# Program: Data Analysis Application for Electronic Components
+
+# Ask the user to enter a letter
+letter = input("Enter a letter (a-z): ").upper()
+
+# Variable to check if a match is found
+found = False
+
+try:
+    # Open and read the file
+    with open("components_data.txt", "r") as file:
+        print("\nFiltered Components:")
+
+        # Read the file line by line
+        for line in file:
+            # Remove extra spaces and newline characters
+            line = line.strip()
+
+            # Skip empty lines
+            if line == "":
+                continue
+
+            # Separate the component ID and voltage
+            component_id, voltage = line.split(",")
+
+            # Remove any extra spaces
+            component_id = component_id.strip()
+            voltage = voltage.strip()
+
+            # Check if the component ID starts with the entered letter
+            if component_id.upper().startswith(letter):
+                print(f"Component ID: {component_id}, Voltage: {voltage}")
+                found = True
+
+    # If no matching components are found
+    if not found:
+        print(f"\nNo components found with IDs starting with '{letter}'.")
+
+# Handle file not found error
+except FileNotFoundError:
+    print("Error: components_data.txt file not found.")
