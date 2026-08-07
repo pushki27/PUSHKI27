@@ -1,0 +1,158 @@
+# ============================================================
+# Sub-task 2: Enhanced Data Processing with Input Validation
+# ============================================================
+
+# File names
+input_file = "components_data_ERR.txt"
+output_file = "components_data.txt"
+error_log = "error_log.txt"
+
+
+# ------------------------------------------------------------
+# Validation Function
+# ------------------------------------------------------------
+def validate_data(component_id, voltage_reading):
+    """
+    Checks whether the component ID and voltage reading are valid.
+
+    Returns:
+        True  - if the data is valid
+        False - if the data is invalid
+    """
+
+    # Component ID must contain exactly 4 alphanumeric characters
+    if len(component_id) != 4 or not component_id.isalnum():
+        return False
+
+    # Voltage reading must be present and numeric
+    if voltage_reading == "":
+        return False
+
+    try:
+        float(voltage_reading)
+    except ValueError:
+        return False
+
+    return True
+
+
+# ------------------------------------------------------------
+# Main Program
+# ------------------------------------------------------------
+
+invalid_count = 0
+valid_entries = []
+
+# Open the input file
+try:
+    with open(input_file, "r") as file:
+
+        # Read every line in the input file
+        for line_number, line in enumerate(file, start=1):
+
+            # Remove spaces and newline characters
+            line = line.strip()
+
+            # Skip completely empty lines
+            if line == "":
+                continue
+
+            # Split the line into component ID and voltage
+            data = line.split(",")
+
+            # Check that the line contains two fields
+            if len(data) != 2:
+                invalid_count += 1
+
+                with open(error_log, "a") as log_file:
+                    log_file.write(
+                        f"Line {line_number}: Invalid data format.\n"
+                    )
+
+                continue
+
+            component_id = data[0].strip()
+            voltage_reading = data[1].strip()
+
+            # ------------------------------------------------
+            # Validate component ID
+            # ------------------------------------------------
+            if len(component_id) != 4 or not component_id.isalnum():
+
+                invalid_count += 1
+
+                with open(error_log, "a") as log_file:
+                    log_file.write(
+                        f"Line {line_number}: Invalid component ID length.\n"
+                    )
+
+                continue
+
+            # ------------------------------------------------
+            # Check for missing voltage
+            # ------------------------------------------------
+            if voltage_reading == "":
+
+                invalid_count += 1
+
+                with open(error_log, "a") as log_file:
+                    log_file.write(
+                        f"Line {line_number}: Missing voltage reading.\n"
+                    )
+
+                continue
+
+            # ------------------------------------------------
+            # Check for non-numeric voltage
+            # ------------------------------------------------
+            try:
+                float(voltage_reading)
+
+            except ValueError:
+
+                invalid_count += 1
+
+                with open(error_log, "a") as log_file:
+                    log_file.write(
+                        f"Line {line_number}: Non-numeric voltage reading.\n"
+                    )
+
+                continue
+
+            # ------------------------------------------------
+            # Valid entry
+            # ------------------------------------------------
+            valid_entries.append(
+                f"{component_id},{voltage_reading}"
+            )
+
+
+    # --------------------------------------------------------
+    # Write valid entries to components_data.txt
+    # --------------------------------------------------------
+    with open(output_file, "w") as file:
+        for entry in valid_entries:
+            file.write(entry + "\n")
+
+
+    # --------------------------------------------------------
+    # Display completion message
+    # --------------------------------------------------------
+    if invalid_count == 0:
+
+        print("components_data.txt is free of errors. Development can continue.")
+
+    else:
+
+        print(
+            f"{invalid_count} invalid entries found. "
+            f"Please check error_log.txt for details."
+        )
+
+
+# ------------------------------------------------------------
+# Handle missing input file
+# ------------------------------------------------------------
+except FileNotFoundError:
+
+    print(f"Error: {input_file} could not be found.")
