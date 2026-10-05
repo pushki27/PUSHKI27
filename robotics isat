@@ -1,0 +1,237 @@
+// ======================================================
+// OBSTACLE AVOIDING ROBOT CAR
+// Arduino UNO + HC-SR04 + L298N + 2 DC MOTORS
+// ======================================================
+
+// Ultrasonic sensor
+const int TRIG_PIN = 12;
+const int ECHO_PIN = 13;
+
+// Push button
+const int BUTTON_PIN = 2;
+
+// L298N motor driver
+const int ENA = 5;
+const int IN1 = 7;
+const int IN2 = 8;
+
+const int ENB = 6;
+const int IN3 = 9;
+const int IN4 = 10;
+
+// Motor speed: 0 - 255
+int motorSpeed = 180;
+
+// Distance at which the robot avoids an obstacle
+const int obstacleDistance = 20;
+
+// Robot ON/OFF state
+bool robotRunning = false;
+
+// ------------------------------------------------------
+// SETUP
+// ------------------------------------------------------
+void setup()
+{
+  Serial.begin(9600);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+  pinMode(ENB, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+
+  stopRobot();
+
+  Serial.println("================================");
+  Serial.println("  ROBOT CAR READY");
+  Serial.println("Press the button to START/STOP");
+  Serial.println("================================");
+}
+
+// ------------------------------------------------------
+// MAIN PROGRAM
+// ------------------------------------------------------
+void loop()
+{
+  // Check push button
+  if (digitalRead(BUTTON_PIN) == LOW)
+  {
+    delay(50);
+
+    if (digitalRead(BUTTON_PIN) == LOW)
+    {
+      robotRunning = !robotRunning;
+
+      if (robotRunning)
+      {
+        Serial.println("Robot STARTED");
+      }
+      else
+      {
+        Serial.println("Robot STOPPED");
+        stopRobot();
+      }
+
+      // Wait until button is released
+      while (digitalRead(BUTTON_PIN) == LOW)
+      {
+        delay(10);
+      }
+    }
+  }
+
+  // If robot is OFF, keep motors stopped
+  if (!robotRunning)
+  {
+    stopRobot();
+    return;
+  }
+
+  // Measure distance
+  int distance = getDistance();
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // Check for obstacle
+  if (distance > 0 && distance <= obstacleDistance)
+  {
+    Serial.println("Obstacle detected!");
+
+    stopRobot();
+    delay(300);
+
+    // Move backwards
+    moveBackward();
+    delay(400);
+
+    stopRobot();
+    delay(200);
+
+    // Turn right approximately 90 degrees
+    turnRight();
+    delay(500);
+
+    stopRobot();
+    delay(200);
+  }
+  else
+  {
+    // No obstacle - move forward
+    moveForward();
+  }
+
+  delay(50);
+}
+
+// ------------------------------------------------------
+// ULTRASONIC DISTANCE
+// ------------------------------------------------------
+int getDistance()
+{
+  long duration;
+  int distance;
+
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG_PIN, LOW);
+
+  duration = pulseIn(ECHO_PIN, HIGH, 30000);
+
+  if (duration == 0)
+  {
+    return 0;
+  }
+
+  distance = duration * 0.034 / 2;
+
+  return distance;
+}
+
+// ------------------------------------------------------
+// MOVE FORWARD
+// ------------------------------------------------------
+void moveForward()
+{
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+}
+
+// ------------------------------------------------------
+// MOVE BACKWARD
+// ------------------------------------------------------
+void moveBackward()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+}
+
+// ------------------------------------------------------
+// TURN RIGHT
+// ------------------------------------------------------
+void turnRight()
+{
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+}
+
+// ------------------------------------------------------
+// TURN LEFT
+// ------------------------------------------------------
+void turnLeft()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  analogWrite(ENA, motorSpeed);
+  analogWrite(ENB, motorSpeed);
+}
+
+// ------------------------------------------------------
+// STOP ROBOT
+// ------------------------------------------------------
+void stopRobot()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+}
